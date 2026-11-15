@@ -1,0 +1,40 @@
+name: autoservice-server
+
+services:
+  open-server:
+    # Uses the existing local image only to run a small redirect server.
+    image: tochka-remonta-landing:latest
+    pull_policy: never
+    container_name: autoservice-server-link
+    ports:
+      - "127.0.0.1:8001:8001"
+    command:
+      - node
+      - -e
+      - |
+        const http = require('node:http');
+        const target = 'http://193.187.96.95:8001/';
+        http.createServer((request, response) => {
+          if (request.url === '/healthz') {
+            response.writeHead(200, {'Content-Type': 'text/plain'});
+            response.end('ok');
+            return;
+          }
+          response.writeHead(302, {'Location': target, 'Cache-Control': 'no-store'});
+          response.end();
+        }).listen(8001, '0.0.0.0');
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8001/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 32
+    mem_limit: 128m
+    cpus: 0.25

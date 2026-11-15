@@ -1,0 +1,16 @@
+name: tochka-remonta
+
+services:
+  landing:
+    build: .
+    ports:
+      - "127.0.0.1:4183:4183"
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 128m
+    cpus: 1
